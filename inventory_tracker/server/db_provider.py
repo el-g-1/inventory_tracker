@@ -1,7 +1,6 @@
 import sqlite3
 import os.path
 import inventory_item, item, shipment
-import warnings
 
 class DbProvider:
     def __init__(self, db_filepath):
@@ -22,20 +21,19 @@ class DbProvider:
         # Save (commit) the changes
         self.con.commit()
 
-    def get_items(self):
+    def get_items(self, ids=None):
+        """Fetches all items by id, duplicates are allowed"""
+        query = 'SELECT rowid, name, description FROM items'
+        if ids:
+            query += ' WHERE ' + ' OR '.join([f'rowid = {id}' for id in ids])
         cur = self.con.cursor()
         item_list = []
-        for row in cur.execute('SELECT rowid, name, description FROM items'):
+        for row in cur.execute(query):
             item_list.append(item.Item(row[0], row[1], row[2]))
         return item_list
 
     def get_item(self, id):
-        cur = self.con.cursor()
-        db_result = cur.execute(f'SELECT rowid, name, description FROM items WHERE rowid = {id}')
-        result = db_result.fetchone()
-        if result is None:
-            raise Exception(f'Item with id = {id} not found')
-        return item.Item(result[0], result[1], result[2])
+        return self.get_items(ids=[id])[0]
 
     def create_item(self, item_instance):
         cur = self.con.cursor()
@@ -66,6 +64,11 @@ class DbProvider:
             item = inventory_item.InventoryItem(row[0], row[1], row[2])
             inventory_list.append(item)
         return inventory_list
+
+    def get_full_inventory(self):
+        inventory_list = self.get_inventory()
+        item_list = self.get_items([inv.item_id for inv in inventory_list])
+        return inventory_list, item_list
 
     def create_inventory(self, inventory):
         cur = self.con.cursor()

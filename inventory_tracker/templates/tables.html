@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <table id="data" class="table table-striped">
+    <thead>
+      <tr>
+        <th>Inventory ID</th>
+        <th>Item ID</th>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Quantity</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    $(document).ready(function () {
+      $('#data').DataTable({
+        ajax: {
+          url: '/inventory/list?full=true',
+          dataSrc: function(json) {
+            let rows = [];
+            let items = {};
+            for (let i in json.items) {
+              items[json.items[i].id] = json.items[i];
+            }
+            for (let i in json.inventory) {
+              let item_id = json.inventory[i].item_id;
+              let row = {
+                inventory_id: json.inventory[i].id,
+                item_id: item_id,
+                quantity: json.inventory[i].quantity,
+                name: items[item_id].name,
+                description: items[item_id].description,
+              };
+              rows.push(row);
+            }
+            return rows;
+          },
+        },
+        columns: [
+          {data: 'inventory_id'},
+          {data: 'item_id'},
+          {data: 'name'},
+          {data: 'description'},
+          {data: 'quantity'},
+        ],
+      });
+    });
+  </script>
+{% endblock %}

@@ -1,11 +1,11 @@
-from flask import Flask, request, make_response
+from flask import Flask, request, make_response, render_template
 import json
 import db_provider
 import inventory_item, item, shipment
 
-app = Flask('inventory_tracker')
+app = Flask('inventory_tracker', template_folder='inventory_tracker/templates')
 
-@app.route('/items')
+@app.route('/items/list')
 def items():
     try:
         db = db_provider.DbProvider('test.db')
@@ -47,9 +47,13 @@ def delete_item():
     except Exception as ex:
         return make_response(json.dumps({'error': str(ex)}), 500)
 
-@app.route('/inventory')
+@app.route('/inventory/list')
 def inventory():
     db = db_provider.DbProvider('test.db')
+    full = request.args.get('full', default=False)
+    if full:
+        inventory_list, item_list = db.get_full_inventory()
+        return json.dumps({"inventory": [x.as_dict() for x in inventory_list], "items": [x.as_dict() for x in item_list]})
     return json.dumps([x.as_dict() for x in db.get_inventory()])
 
 @app.route('/inventory/create', methods=['POST'])
@@ -113,6 +117,10 @@ def create_shipment_inventory():
         return json.dumps({'id': db.create_shipment_inventory(new_item)})
     except Exception as ex:
         return make_response(json.dumps({'error': str(ex)}), 500)
+
+@app.route('/')
+def index():
+    return render_template('tables.html', title='Inventory tracker')
 
 if __name__ == '__main__':
     app.run()
