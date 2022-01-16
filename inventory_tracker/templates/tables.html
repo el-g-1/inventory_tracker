@@ -1,55 +1,381 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <table id="data" class="table table-striped">
-    <thead>
-      <tr>
-        <th>Inventory ID</th>
-        <th>Item ID</th>
-        <th>Name</th>
-        <th>Description</th>
-        <th>Quantity</th>
-      </tr>
-    </thead>
-    <tbody>
-    </tbody>
-  </table>
+<table id="inventoryTable" class="table table-striped">
+  <thead>
+    <tr>
+      <th></th>
+      <th>Inventory ID</th>
+      <th>Item ID</th>
+      <th>Name</th>
+      <th>Description</th>
+      <th>Quantity</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+
+<!-- Click on Modal Button -->
+<button id="buttonCreateInventory" type="button" class="btn btn-primary mx-auto d-block mt-5" data-bs-toggle="modal"
+  data-bs-target="#inventoryModalForm">
+  Create Inventory
+</button>
+<button id="buttonEditInventory" type="button" class="btn btn-primary mx-auto d-block mt-5" data-bs-toggle="modal"
+  data-bs-target="#inventoryModalForm">
+  Edit Inventory
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="inventoryModalForm" tabindex="-1" aria-labelledby="inventoryModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="inventoryModalLabel">Create/Edit Inventory</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="inventoryForm">
+          <div class="mb-3">
+            <label class="form-label">Item ID</label>
+            <input type="text" class="form-control" id="inventoryFormItemId" name="item_id" placeholder="" disabled />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-control" id="inventoryFormName" name="name" placeholder="Item Name" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <input type="text" class="form-control" id="inventoryFormDescription" name="description"
+              placeholder="Item Description" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Quantity</label>
+            <input type="number" class="form-control" id="inventoryFormQuantity" name="quantity"
+              placeholder="Item Quantity" min="0" step="1" />
+          </div>
+          <div class="modal-footer d-block">
+            <button type="submit" class="btn btn-warning float-end" id='inventoryFormSubmit'>Edit</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<table id="shipmentTable" class="table table-striped">
+  <thead>
+    <tr>
+      <th></th>
+      <th>Shipment Inventory ID</th>
+      <th>Shipment ID</th>
+      <th>Address</th>
+      <th>Item ID</th>
+      <th>Name</th>
+      <th>Description</th>
+      <th>Quantity</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+
+<!-- Click on Modal Button -->
+<button id="buttonCreateShipment" type="button" class="btn btn-primary mx-auto d-block mt-5" data-bs-toggle="modal"
+  data-bs-target="#shipmentModalForm">
+  Create Shipment
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="shipmentModalForm" tabindex="-1" aria-labelledby="shipmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shipmentModalLabel">Create Shipment</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="shipmentForm">
+          <div class="mb-3">
+            <label class="form-label">Address</label>
+            <input type="text" class="form-control" id="shipmentFormAddress" name="address" placeholder="" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Item ID</label>
+            <input type="text" class="form-control" id="shipmentFormItemId" name="item_id" placeholder="" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Quantity</label>
+            <input type="number" class="form-control" id="shipmentFormQuantity" name="quantity"
+              placeholder="Item Quantity" min="0" step="1" />
+          </div>
+          <div class="modal-footer d-block">
+            <button type="submit" class="btn btn-warning float-end" id='shipmentFormSubmit'>Create</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id='alerts'>
+</div>
 {% endblock %}
 
 {% block scripts %}
-  <script>
-    $(document).ready(function () {
-      $('#data').DataTable({
-        ajax: {
-          url: '/inventory/list?full=true',
-          dataSrc: function(json) {
-            let rows = [];
-            let items = {};
-            for (let i in json.items) {
-              items[json.items[i].id] = json.items[i];
-            }
-            for (let i in json.inventory) {
-              let item_id = json.inventory[i].item_id;
-              let row = {
-                inventory_id: json.inventory[i].id,
-                item_id: item_id,
-                quantity: json.inventory[i].quantity,
-                name: items[item_id].name,
-                description: items[item_id].description,
-              };
-              rows.push(row);
-            }
-            return rows;
-          },
+<script>
+  var inventoryDataTable = null;
+
+  function createInventoryTable() {
+    inventoryDataTable = $('#inventoryTable').DataTable({
+      ajax: {
+        url: '/api/inventory/list?full=true',
+        dataSrc: function (json) {
+          let rows = [];
+          let items = {};
+          for (let i in json.items) {
+            items[json.items[i].id] = json.items[i];
+          }
+          for (let i in json.inventory) {
+            let item_id = json.inventory[i].item_id;
+            let row = {
+              inventory_id: json.inventory[i].id,
+              item_id: item_id,
+              quantity: json.inventory[i].quantity,
+              name: items[item_id].name,
+              description: items[item_id].description,
+            };
+            rows.push(row);
+          }
+          return rows;
         },
-        columns: [
-          {data: 'inventory_id'},
-          {data: 'item_id'},
-          {data: 'name'},
-          {data: 'description'},
-          {data: 'quantity'},
-        ],
+      },
+      columns: [
+        {
+          data: null,
+          defaultContent: '',
+          orderable: false,
+          className: 'select-checkbox',
+        },
+        { data: 'inventory_id', visible: false },
+        { data: 'item_id' },
+        { data: 'name' },
+        { data: 'description' },
+        { data: 'quantity' },
+      ],
+      select: {
+        style: 'single',
+        selector: 'td:first-child'
+      },
+    });
+    let changeEditButtonState = function () {
+      let selected = inventoryDataTable.rows({ selected: true }).data();
+      $('#buttonEditInventory').prop('disabled', selected.length != 1);
+    };
+    changeEditButtonState();
+    inventoryDataTable.on('select', changeEditButtonState);
+    inventoryDataTable.on('deselect', changeEditButtonState);
+  }
+
+  var shipmentDataTable = null;
+
+  function createShipmentsTable() {
+    shipmentDataTable = $('#shipmentTable').DataTable({
+      ajax: {
+        url: '/api/shipments/list?full=true',
+        dataSrc: function (json) {
+          let rows = [];
+          let items = {};
+          for (let i in json.items) {
+            items[json.items[i].id] = json.items[i];
+          }
+          let shipments = {};
+          for (let i in json.shipments) {
+            shipments[json.shipments[i].id] = json.shipments[i];
+          }
+          for (let i in json.shipment_inventory) {
+            let item_id = json.shipment_inventory[i].item_id;
+            let shipment_id = json.shipment_inventory[i].shipment_id;
+            let row = {
+              shipment_inventory_id: json.shipment_inventory[i].id,
+              shipment_id: shipment_id,
+              address: shipments[shipment_id].address,
+              item_id: item_id,
+              name: items[item_id].name,
+              description: items[item_id].description,
+              quantity: json.shipment_inventory[i].quantity,
+            };
+            rows.push(row);
+          }
+          return rows;
+        },
+      },
+      columns: [
+        {
+          data: null,
+          defaultContent: '',
+          orderable: false,
+          className: 'select-checkbox',
+        },
+        { data: 'shipment_inventory_id', visible: false },
+        { data: 'shipment_id' },
+        { data: 'address' },
+        { data: 'item_id' },
+        { data: 'name' },
+        { data: 'description' },
+        { data: 'quantity' },
+      ],
+      select: {
+        style: 'single',
+        selector: 'td:first-child'
+      },
+    });
+  }
+
+  function reloadInventory() {
+    inventoryDataTable.ajax.reload();
+  }
+
+  function reloadShipments() {
+    shipmentDataTable.ajax.reload();
+  }
+
+  function refresh() {
+    reloadInventory();
+    reloadShipments();
+  }
+
+  $(document).ready(function () {
+    createInventoryTable();
+    createShipmentsTable();
+  });
+
+  function addAlert(message) {
+    $('#alerts').append(`<div class="alert alert-danger alert-dismissible fade show" role="alert">
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>`);
+  }
+
+  function doPost(method, data, success_fn) {
+    $.ajax({
+      type: "POST",
+      url: method,
+      data: JSON.stringify(data),
+      success: function (data) {
+        let parsed = {};
+        try {
+          parsed = JSON.parse(data);
+          if (parsed.error) {
+            addAlert(`<strong>Failure: </strong>${parsed.error}`);
+            return;
+          }
+        } catch { }
+        if (success_fn) {
+          success_fn(parsed);
+        }
+      },
+      error: function (data, status) {
+        let parsed = {};
+        try {
+          parsed = JSON.parse(data.responseText);
+          if (parsed.error) {
+            addAlert(`<strong>Failure: </strong>${parsed.error}`);
+            return;
+          }
+        } catch { }
+        addAlert(`<strong>Error</strong> while querying ${method}: ${data.statusText}`);
+      },
+      contentType: "application/json"
+    });
+  }
+
+  $("#inventoryForm").on("submit", function (event) {
+    event.preventDefault();
+    $('#inventoryModalForm').modal('hide');
+    let form = $("#inventoryForm").serializeArray();
+    let data = {};
+    for (let i in form) {
+      data[form[i].name] = form[i].value;
+    }
+    if ($('#inventoryFormSubmit').html() == "Edit") {
+      let selected = inventoryDataTable.rows({ selected: true }).data()[0];
+      doPost("/api/inventory/edit", {
+        id: Number(selected.inventory_id),
+        quantity: Number(data.quantity)
+      },
+        function (resp) {
+          refresh();
+        });
+      doPost("/api/items/edit", {
+        id: Number(selected.item_id),
+        name: data.name,
+        description: data.description
+      },
+        function (resp) {
+          refresh();
+        });
+    } else {
+      doPost("/api/items/create", { name: data.name, description: data.description }, function (resp) {
+        if (!resp.id) { addAlert('<strong>Failure</strong>Server did not return new item ID'); return; }
+        doPost("/api/inventory/create", {
+          item_id: Number(resp.id),
+          quantity: Number(data.quantity)
+        }, function () {
+          reloadInventory();
+        });
+      });
+    }
+    return true;
+  });
+
+  function setContentInInventoryModalForm(data) {
+    $("#inventoryFormItemId").val(data.item_id);
+    $("#inventoryFormName").val(data.name);
+    $("#inventoryFormDescription").val(data.description);
+    $("#inventoryFormQuantity").val(data.quantity);
+  }
+
+  function clearContentInInventoryModalForm() {
+    setContentInInventoryModalForm({});
+  }
+
+  $("#buttonCreateInventory").on("click", function (event) {
+    clearContentInInventoryModalForm();
+    $('#inventoryFormSubmit').html('Create');
+  });
+  $("#buttonEditInventory").on("click", function (event) {
+    clearContentInInventoryModalForm();
+    $('#inventoryFormSubmit').html('Edit');
+    let selected = inventoryDataTable.rows({ selected: true }).data();
+    if (selected.length == 1) {
+      setContentInInventoryModalForm(selected[0]);
+    }
+  });
+
+  $("#shipmentForm").on("submit", function (event) {
+    event.preventDefault();
+    $('#shipmentModalForm').modal('hide');
+    let form = $("#shipmentForm").serializeArray();
+    let data = {};
+    for (let i in form) {
+      data[form[i].name] = form[i].value;
+    }
+    doPost("api/shipments/create", { address: data.address }, function (resp) {
+      if (!resp.id) {
+        addAlert('<strong>Failure</strong>Server did not return new shipment ID');
+        return;
+      }
+      doPost("/api/shipment_inventory/create", {
+        shipment_id: Number(resp.id),
+        item_id: Number(data.item_id),
+        quantity: Number(data.quantity)
+      }, function () {
+        reloadShipments();
       });
     });
-  </script>
+  });
+</script>
 {% endblock %}
+template.html
+Displaying template.html.

@@ -111,6 +111,12 @@ class DbProvider:
             shipment_inventory_items.append(shipment_inventory)
         return shipment_inventory_items
 
+    def get_full_shipment(self):
+        shipment_list = self.get_shipments()
+        shipment_item_list = self.get_shipment_inventory_items()
+        items = self.get_items([shipment_inventory_item.item_id for shipment_inventory_item in shipment_item_list])
+        return shipment_list, shipment_item_list, items
+
     def create_shipment(self, address):
         cur = self.con.cursor()
         cur.execute(f'''INSERT INTO shipments VALUES ("{address}")''')

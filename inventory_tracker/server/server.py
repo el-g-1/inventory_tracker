@@ -5,7 +5,7 @@ import inventory_item, item, shipment
 
 app = Flask('inventory_tracker', template_folder='inventory_tracker/templates')
 
-@app.route('/items/list')
+@app.route('/api/items/list')
 def items():
     try:
         db = db_provider.DbProvider('test.db')
@@ -16,7 +16,7 @@ def items():
     except Exception as ex:
         return make_response(json.dumps({'error': str(ex)}), 500)
 
-@app.route('/items/create', methods=['POST'])
+@app.route('/api/items/create', methods=['POST'])
 def create_item():
     try:
         db = db_provider.DbProvider('test.db')
@@ -26,7 +26,7 @@ def create_item():
     except Exception as ex:
         return make_response(json.dumps({'error': str(ex)}), 500)
 
-@app.route('/items/edit', methods=['POST'])
+@app.route('/api/items/edit', methods=['POST'])
 def edit_item():
     try:
         db = db_provider.DbProvider('test.db')
@@ -37,7 +37,7 @@ def edit_item():
     except Exception as ex:
         return make_response(json.dumps({'error': str(ex)}), 500)
 
-@app.route('/items/delete', methods=['DELETE'])
+@app.route('/api/items/delete', methods=['DELETE'])
 def delete_item():
     try:
         db = db_provider.DbProvider('test.db')
@@ -47,7 +47,7 @@ def delete_item():
     except Exception as ex:
         return make_response(json.dumps({'error': str(ex)}), 500)
 
-@app.route('/inventory/list')
+@app.route('/api/inventory/list')
 def inventory():
     db = db_provider.DbProvider('test.db')
     full = request.args.get('full', default=False)
@@ -56,7 +56,7 @@ def inventory():
         return json.dumps({"inventory": [x.as_dict() for x in inventory_list], "items": [x.as_dict() for x in item_list]})
     return json.dumps([x.as_dict() for x in db.get_inventory()])
 
-@app.route('/inventory/create', methods=['POST'])
+@app.route('/api/inventory/create', methods=['POST'])
 def create_inventory():
     try:
         db = db_provider.DbProvider('test.db')
@@ -66,7 +66,7 @@ def create_inventory():
     except Exception as ex:
         return make_response(json.dumps({'error': str(ex)}), 500)
 
-@app.route('/inventory/edit_quantity', methods=['POST'])
+@app.route('/api/inventory/edit', methods=['POST'])
 def edit_quantity():
     try:
         db = db_provider.DbProvider('test.db')
@@ -76,7 +76,7 @@ def edit_quantity():
     except Exception as ex:
         return make_response(json.dumps({'error': str(ex)}), 500)
 
-@app.route('/inventory/delete', methods=['DELETE'])
+@app.route('/api/inventory/delete', methods=['DELETE'])
 def delete_inventory():
     try:
         db = db_provider.DbProvider('test.db')
@@ -86,15 +86,28 @@ def delete_inventory():
     except Exception as ex:
         return make_response(json.dumps({'error': str(ex)}), 500)
 
-@app.route('/shipments')
+# @app.route('/shipments/')
+# def shipments():
+#     try:
+#         db = db_provider.DbProvider('test.db')
+#         return json.dumps([x.as_dict() for x in db.get_shipments()])
+#     except Exception as ex:
+#         return make_response(json.dumps({'error': str(ex)}), 500)
+
+@app.route('/api/shipments/list')
 def shipments():
+    db = db_provider.DbProvider('test.db')
+    full = request.args.get('full', default=False)
+    if full:
+        shipment_list, shipment_item_list, items = db.get_full_shipment()
+        return json.dumps({"shipments": [x.as_dict() for x in shipment_list], "shipment_inventory": [x.as_dict() for x in shipment_item_list], "items": [x.as_dict() for x in items]})
+    # return json.dumps([x.as_dict() for x in db.get_inventory()])
     try:
-        db = db_provider.DbProvider('test.db')
         return json.dumps([x.as_dict() for x in db.get_shipments()])
     except Exception as ex:
         return make_response(json.dumps({'error': str(ex)}), 500)
 
-@app.route('/shipments/create', methods=['POST'])
+@app.route('/api/shipments/create', methods=['POST'])
 def create_shipment():
     try:
         db = db_provider.DbProvider('test.db')
@@ -103,12 +116,12 @@ def create_shipment():
     except Exception as ex:
         return make_response(json.dumps({'error': str(ex)}), 500)
 
-@app.route('/shipment_inventory')
+@app.route('/api/shipment_inventory/list')
 def shipment_inventory():
     db = db_provider.DbProvider('test.db')
     return json.dumps([x.as_dict() for x in db.get_shipment_inventory_items()])
 
-@app.route('/shipment_inventory/create', methods=['POST'])
+@app.route('/api/shipment_inventory/create', methods=['POST'])
 def create_shipment_inventory():
     try:
         db = db_provider.DbProvider('test.db')
