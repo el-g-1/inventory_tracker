@@ -18,7 +18,7 @@ In addition, it supports the following:
 To install dependencies:
 
 * `cd` into the project's root directory (where setup.py is located)
-* run: `python setup.py install`
+* run: `pip install -e .` or `python setup.py install`
 
 ## Usage
 
