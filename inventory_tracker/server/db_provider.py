@@ -93,6 +93,10 @@ class DbProvider:
         )
         if db_result.fetchone() is not None:
             raise Exception(f"Inventory with item_id = {inventory.item_id} already exists")
+        if inventory.quantity <= 0:
+            raise Exception(f"Inventory quantity must be greater than 0")
+        if not float(inventory.quantity).is_integer():
+            raise Exception(f"Inventory quantity must be an integer")
         cur.execute(
             f"""INSERT INTO inventory_items VALUES
                        ({inventory.item_id}, {inventory.quantity})"""
@@ -101,6 +105,10 @@ class DbProvider:
         return cur.lastrowid
 
     def edit_quantity(self, id, quantity):
+        if quantity <= 0:
+            raise Exception(f"Quantity must be greater than 0")
+        if not float(quantity).is_integer():
+            raise Exception(f"Quantity must be an integer")
         cur = self.con.cursor()
         cur.execute(f"UPDATE inventory_items SET quantity = {quantity} WHERE rowid = {id}")
         self.con.commit()
@@ -147,6 +155,10 @@ class DbProvider:
         return cur.lastrowid
 
     def create_shipment_inventory(self, shipment_inventory):
+        if shipment_inventory.quantity <= 0:
+            raise Exception(f"Shipment inventory quantity must be greater than 0")
+        if not float(shipment_inventory.quantity).is_integer():
+            raise Exception(f"Shipment Inventory quantity must be an integer")
         cur = self.con.cursor()
         if (
             cur.execute(
